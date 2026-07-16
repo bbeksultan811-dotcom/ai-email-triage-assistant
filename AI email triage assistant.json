@@ -1,0 +1,360 @@
+{
+  "name": "AI email triage assistant",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "customer-support",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "e9339e26-fbfe-4310-be6c-3e93606d22a8",
+      "name": "Webhook",
+      "webhookId": "7e17fff5-3794-464f-8ad4-f304a830bb4e"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"success\",\n  \"category\": \"{{$json.category}}\",\n  \"priority\": \"{{$json.priority}}\",\n  \"summary\": \"{{$json.summary}}\"\n}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1072,
+        -16
+      ],
+      "id": "8f205002-9d1f-4c5f-85c4-31493f95143f",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "AQ.Ab8RN6Iu_mBPAJUepFmUATxeiVQ-_3ujcsBw9n93svOwavnDnA"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"contents\": [\n    {\n      \"parts\": [\n        {\n          \"text\": \"Email: {{$json.body.email}}\\n\\nSubject: {{$json.body.subject}}\\n\\nMessage:\\n{{$json.body.message}}\\n\\nAnalyze this customer support request.\\n\\nReturn ONLY valid JSON in this format:\\n{\\n  \\\"category\\\": \\\"Technical | Billing | Sales | Complaint | Other\\\",\\n  \\\"priority\\\": \\\"High | Medium | Low\\\",\\n  \\\"sentiment\\\": \\\"Positive | Neutral | Negative\\\",\\n  \\\"summary\\\": \\\"Short summary\\\",\\n  \\\"confidence\\\": 0.0\\n}\\n\\nRules:\\n- Choose ONLY one category from the allowed values.\\n- If none matches, use Other.\\n- Never invent new categories.\\n- Return ONLY JSON.\\n- No markdown.\\n- No explanations.\"\n        }\n      ]\n    }\n  ]\n}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "7fc94c0c-8ffc-4ac2-9ead-9def3942a925",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const webhook = $('Webhook').first().json.body;\n\nconst aiText = $input.first().json.candidates[0].content.parts[0].text;\nconst ai = JSON.parse(aiText);\n\nreturn [{\n  json: {\n    email: webhook.email,\n    subject: webhook.subject,\n    message: webhook.message,\n\n    category: ai.category,\n    priority: ai.priority,\n    sentiment: ai.sentiment,\n    summary: ai.summary,\n    confidence: ai.confidence\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "b8a3f209-0ef7-43a5-89c2-d9368cebad44",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "52ef1932-381e-4557-8f47-77c378d1b6fe",
+              "leftValue": "={{$json.confidence}}",
+              "rightValue": 0.8,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        624,
+        0
+      ],
+      "id": "4bab72db-56ce-48c0-b6e8-cf952355101c",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1-AwFaEK1KkrmdAK-eVQRTNW-f9ZskGxv0c6Qe3DKeak",
+          "mode": "list",
+          "cachedResultName": "AI Email Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1-AwFaEK1KkrmdAK-eVQRTNW-f9ZskGxv0c6Qe3DKeak/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Лист1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1-AwFaEK1KkrmdAK-eVQRTNW-f9ZskGxv0c6Qe3DKeak/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ new Date().toISOString() }}",
+            "Email": "={{$json.email}}",
+            "Subject": "={{$json.subject}}",
+            "category": "={{$json.category}}",
+            "priority": "={{$json.priority}}",
+            "summary": "={{$json.summary}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Priority",
+              "displayName": "Priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Summary",
+              "displayName": "Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Subject",
+              "displayName": "Subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "priority",
+              "displayName": "priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "summary",
+              "displayName": "summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        816,
+        112
+      ],
+      "id": "b45294c6-680f-461f-b12c-405e33ec1d63",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "EDdjK8gydvQTsNz3",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "6512127938",
+        "text": "=🚨 New Support Ticket\n\n📧 Email:\n{{$json.email}}\n\n📂 Category:\n{{$json.category}}\n\n⚠️ Priority:\n{{$json.priority}}\n\n📝 Summary:\n{{$json.summary}}\n\n💬 Message:\n{{$json.message}}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        816,
+        -144
+      ],
+      "id": "6c6a3518-9ab5-4d37-b6da-1912122de107",
+      "name": "Send a text message",
+      "webhookId": "d9cfa886-0369-4c51-9eaa-1ec317e85ccf",
+      "credentials": {
+        "telegramApi": {
+          "id": "7g3qYYDfRywaqiER",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "826de0a7-a70c-4d6d-92b3-db391511d400",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "cc2ce1497fea5ef495c4fc759ceafe1145b1ecced76f0b3cadc9843ca9ce88bd"
+  },
+  "nodeGroups": [],
+  "id": "Jg1ivIQ4Sxivt4jv",
+  "tags": []
+}
