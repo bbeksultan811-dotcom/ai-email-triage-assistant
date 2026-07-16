@@ -105,11 +105,11 @@ The workflow automatically:
 
 ### Workflow
 
-![Workflow](screenshots/workflow.png)
+![Workflow](screenshots/workflow.jpg)
 
 ### Telegram
 
-![Telegram](screenshots/telegram.png)
+![Telegram](screenshots/telegram.jpg)
 
 ### Google Sheets
 
