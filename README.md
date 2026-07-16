@@ -101,7 +101,19 @@ The workflow automatically:
 - sends Telegram alerts for high-priority emails
 
 ---
+## Screenshots
 
+### Workflow
+
+![Workflow](screenshots/workflow.png)
+
+### Telegram
+
+![Telegram](screenshots/telegram.png)
+
+### Google Sheets
+
+![Google Sheets](screenshots/google-sheets.png)
 ## Author
 
 Built by Beksultan
