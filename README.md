@@ -116,4 +116,4 @@ The workflow automatically:
 ![Google Sheets](screenshots/google-sheets.png)
 ## Author
 
-Built by Beksultan
+Built by Farangiz
